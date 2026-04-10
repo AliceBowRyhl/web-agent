@@ -17,27 +17,27 @@ Use this skill when extracting data that must match a specific JSON schema.
 
 ### Single target research (one entity, multiple fields)
 1. Search for relevant URLs.
-2. Scrape to extract data — use spawnAgents if researching multiple independent sources.
+2. Scrape to extract data — stay in the orchestrator unless you have many independent sources (roughly 5+) where parallel workers clearly help.
 3. Compile findings and call formatOutput.
 
 ### List of items (array in schema)
 1. Search/scrape to get the list of items.
 2. Are all requested details included in the list?
    - Yes: Build the result and call formatOutput.
-   - No: Use spawnAgents to research each item in parallel. Each agent gets the item name and specific fields to find.
+   - No: If there are many items (roughly 5+), use spawnAgents so each worker gets the item and fields; otherwise fetch details sequentially in the orchestrator.
 3. Aggregate all results and call formatOutput.
 
 ### All items from a website
 1. Check sitemaps (sitemap.xml, robots.txt) for an easy route to all pages.
 2. Scrape the entry page. Determine: pagination? Categories? Subcategories?
 3. For pagination, use interact to click through every page.
-4. For categories, scrape each category — use spawnAgents for parallel processing.
+4. For categories, scrape each category — use spawnAgents only when many independent categories warrant parallel fan-out.
 5. Aggregate and call formatOutput.
 
 ## Scraping for structured data
 - PREFER scrape with a targeted query over raw page dumps. It keeps context lean.
 - When scraping lists, ALWAYS ask about pagination in your query: "How many total results? Is there a next page?"
-- For 2+ URLs, use spawnAgents — each agent gets specific URLs and fields to extract.
+- For many independent URLs (roughly 5+), spawnAgents can help — each worker gets specific URLs and fields. Fewer URLs: handle in the orchestrator.
 - If a scrape returns a 404 or bot-check, do NOT retry. Move on to alternative sources.
 
 ## Building the output

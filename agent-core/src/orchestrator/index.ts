@@ -1,4 +1,4 @@
-import { ToolLoopAgent, stepCountIs, type LanguageModel } from "ai";
+import { ToolLoopAgent, stepCountIs, type LanguageModel, type ToolSet } from "ai";
 import type { AgentConfig, ModelConfig, Toolkit } from "../types";
 import { resolveModel } from "../resolve-model";
 import { createSkillTools } from "../skills/tools";
@@ -179,7 +179,7 @@ export async function createOrchestrator(options: OrchestratorOptions) {
 When handling a request:
 1. Determine the task type and what data the user needs.
 2. If URLs are provided, call lookup_site_playbook for site-specific navigation.
-3. Execute — search, scrape, paginate, spawn parallel agents as needed.
+3. Execute — search, scrape, paginate; use spawnAgents only when many independent targets clearly warrant parallel fan-out.
 4. Verify completeness against the schema/checklist before presenting results.
 5. Call formatOutput with the collected data. The task is not done until formatOutput is called.`,
       SKILL_CATALOG: skillCatalog,
@@ -211,7 +211,7 @@ When handling a request:
       formatOutput,
       bashExec,
       exportSkill,
-    },
+    } as ToolSet,
     stopWhen: stepCountIs(config.maxSteps ?? 50),
     prepareStep: compaction.prepareStep,
     experimental_repairToolCall: async ({ toolCall, inputSchema }) => {
