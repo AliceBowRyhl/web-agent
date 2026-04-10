@@ -52,7 +52,7 @@ function makeSubagentTool(
   subAgent: ToolLoopAgent<never, ToolSet, never>,
 ) {
   return tool({
-    description: `Delegate a task to sub-agent "${name}": ${description}`,
+    description: `Specialist "${name}": ${description}. Call only when the user’s task clearly matches this specialty; prefer handling general research in the orchestrator with search/scrape.`,
     inputSchema: subagentSchema,
     execute: async ({ task }, { abortSignal }) => {
       const result = await subAgent.generate({ prompt: task, abortSignal });
@@ -110,7 +110,13 @@ function buildFullToolset(
     : toolkit.tools;
   const skillTools = createSkillTools(skills, customInstructions);
   const spawnAgents = createWorkerTool(model, toolkit, skills, workerOptions);
-  return { ...baseTools, ...skillTools, spawnAgents, formatOutput, bashExec };
+  return {
+    ...baseTools,
+    ...skillTools,
+    spawnAgents,
+    formatOutput,
+    bashExec,
+  } as ToolSet;
 }
 
 export async function createSubAgentTools(
@@ -152,7 +158,7 @@ export async function createSubAgentTools(
 
 You have the full toolkit: search, scrape, interact, bash, formatOutput, and skills.${skillCatalog}
 
-If the task splits into 2+ independent collection tasks, use spawnAgents to parallelize them.
+If you have many independent collection lines (roughly 5+), you may use spawnAgents; otherwise prefer direct tools.
 
 When finished, write a clear summary of what you found.${preloadedSkills}${customInstr}`,
       tools,
@@ -187,7 +193,7 @@ When finished, write a clear summary of what you found.${preloadedSkills}${custo
       model: builtinModel,
       instructions: `You are a sub-agent: "${builtin.name}". ${builtin.description}.
 
-You have the full toolkit: search, scrape, interact, bash, formatOutput, skills, and spawnAgents. Use whatever tools you need to complete the task.${skillCatalog}${preloadedSkill}`,
+You have the full toolkit: search, scrape, interact, bash, formatOutput, skills, and spawnAgents. Prefer direct tools; use spawnAgents only for large parallel fan-out.${skillCatalog}${preloadedSkill}`,
       tools: builtinTools,
       stopWhen: stepCountIs(builtin.maxSteps),
     });

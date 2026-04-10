@@ -1,4 +1,4 @@
-import { ToolLoopAgent, tool, stepCountIs, type LanguageModel } from "ai";
+import { ToolLoopAgent, tool, stepCountIs, type LanguageModel, type ToolSet } from "ai";
 import { z } from "zod";
 import { bashExec, formatOutput } from "../tools";
 import type { SkillMetadata, Toolkit } from "../types";
@@ -59,12 +59,14 @@ export function createWorkerTool(
 
   const skillTools = createSkillTools(skills);
   // Workers get search + scrape only (no interact — browser sessions are too heavy for parallel workers)
-  const filteredTools = toolkit.createFiltered
-    ? { ...toolkit.createFiltered(["search", "scrape"]), ...skillTools, formatOutput, bashExec }
-    : { ...toolkit.tools, ...skillTools, formatOutput, bashExec };
+  const filteredTools = (
+    toolkit.createFiltered
+      ? { ...toolkit.createFiltered(["search", "scrape"]), ...skillTools, formatOutput, bashExec }
+      : { ...toolkit.tools, ...skillTools, formatOutput, bashExec }
+  ) as ToolSet;
 
   return tool({
-    description: `Spawn parallel worker agents to handle independent tasks concurrently. Each worker gets its own isolated context with search, scrape, and bash tools. Workers return only a concise summary — the orchestrator context stays clean. Use this when you have 2+ independent data collection tasks. NOTE: Workers cannot use interact (browser sessions). If a task requires interact, handle it in the orchestrator instead of delegating.`,
+    description: `Spawn parallel worker agents for independent tasks. Each worker gets search, scrape, and bash only (no interact). Use when you have many independent targets (roughly 5+) or deep per-target work where parallel fan-out clearly beats one orchestrator thread. Do not use for small jobs you can finish in a handful of orchestrator steps. If a task needs interact, run it in the orchestrator, not in a worker.`,
     inputSchema: z.object({
       tasks: z
         .array(

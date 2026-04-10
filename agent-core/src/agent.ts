@@ -235,7 +235,7 @@ Available tools:
 - interact: Click buttons, fill forms, handle JavaScript-heavy pages
 - bashExec: Process data with jq, awk, sed, grep, sort, etc.
 - formatOutput: Export results as JSON, CSV, markdown
-- Sub-agents: Can delegate to specialized sub-agents${skillList}
+- Sub-agents / spawnAgents: optional; use only when many independent targets or a specialist sub-agent clearly fits${skillList}
 
 For each step, specify:
 1. What tool to use
